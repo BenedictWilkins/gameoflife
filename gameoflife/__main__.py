@@ -54,39 +54,63 @@ class GameOfLife:
         width, height = self.screen_dim
         self.screen = pygame.display.set_mode((width, height))
         self.draw(self.screen)
+
+        self.pause = True
+        self.mouse_position = np.array([0,0])
+        self.mouse_down = False
+       
         
 
     def update(self, dt): # list for quit events
-        for event in pygame.event.get():
+        events =  pygame.event.get()
+        i = self.mouse_position
+        for event in events:
             if event.type == QUIT:
                 self.exit = True
+
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    self.pause = not self.pause
+
+            elif self.mouse_down and event.type == pygame.MOUSEMOTION:
+                i = (np.array(event.pos) // (self.screen_dim / self.grid_dim)).astype(np.int64)
+                if np.any(i != self.mouse_position):
+                    self.mouse_position = i
+                    self.x[i[0],i[1]] = 1 - self.x[i[0],i[1]]
+
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                i = (np.array(event.pos) // (self.screen_dim / self.grid_dim)).astype(np.int64)
+                self.mouse_position = i
+                self.x[i[0],i[1]] = 1 - self.x[i[0],i[1]]
+                self.mouse_down = True
+            
+            elif event.type == pygame.MOUSEBUTTONUP:
+                self.mouse_down = False
+
+        if not self.pause:
+            self.x =  step(self.x)
+           
         
     def draw(self, screen): # update the display      
-        self.x =  step(self.x)
         surface = pygame.surfarray.make_surface(self.colours[self.x])
         surface = pygame.transform.scale(surface, self.screen_dim)
-
         screen.blit(surface, (0,0))
         pygame.display.flip()
-    
+        
     def run(self):
         fpsClock = pygame.time.Clock()
         dt = self.speed
         while not self.exit: 
-            #print("UPDATE")
             self.update(dt)
             self.draw(self.screen)
             dt = fpsClock.tick(self.speed)
-        
+
         pygame.quit()
   
 grid_dim = np.array([100,100])
 x = np.zeros(grid_dim, dtype=np.int8)
-x[1:-1,1:-1] = np.random.randint(0, 2, size=grid_dim-2, dtype=np.int8) # random initial config
+#x[1:-1,1:-1] = np.random.randint(0, 2, size=grid_dim-2, dtype=np.int8) # random initial config
 
 game = GameOfLife(x)
-
-import time
-time.sleep(10)
-
 game.run()
