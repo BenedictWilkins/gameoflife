@@ -1,3 +1,3 @@
-# gameoflife
+# Game of Life
 
-Just game of life... simple & dirty implementation
+Interactive demo of Conway's Game of Life run it via `__main__.py`. 
